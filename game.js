@@ -13,22 +13,42 @@ let playerSprite = makeSprite([
 
 // TODO: animated aliens (toggle between 2 or 3 sprites per alien)
 let alienSprite = [];
-alienSprite[0] = makeSprite([
-    "...",
-    " . ",
-    ". .",
-]);
-alienSprite[1] = makeSprite([
-    " . ",
-    "...",
-    ". .",
-]);
-alienSprite[2] = makeSprite([
-    "...",
-    "...",
-    ". .",
-]);
-
+alienSprite[0] = [
+    makeSprite([
+        ". .",
+        " . ",
+        "...",
+    ]),
+    makeSprite([
+        ". .",
+        "...",
+        " . ",
+    ])
+];
+alienSprite[1] = [
+    makeSprite([
+        " . ",
+        "...",
+        ". .",
+    ]),
+    makeSprite([
+        ". .",
+        "...",
+        " . ",
+    ])
+];
+alienSprite[2] = [
+    makeSprite([
+        "...",
+        "...",
+        ". .",
+    ]),
+    makeSprite([
+        ". .",
+        "...",
+        "...",
+    ])
+];
 
 function create(game) {
     player = {
@@ -65,6 +85,7 @@ function createAliens() {
         dir: 1,
         positions: [],
         bullets: [],
+        frame: 0,
     };
 
     for (let y = 0; y < h; y++) {
@@ -123,7 +144,7 @@ function drawAliens(c) {
     for (let i = 0; i < aliens.positions.length; i++) {
         let p = aliens.positions[i];
         if (aliens.y + p[1] < 24)
-            drawSprite(aliens.x+p[0], aliens.y+p[1], p[2], c);
+            drawSprite(aliens.x+p[0], aliens.y+p[1], p[2][aliens.frame], c);
     }
 }
 
@@ -179,6 +200,7 @@ function killAlien(x, y) {
 
 function updateAliens() {
     aliens.x += aliens.dir;
+    aliens.frame = (aliens.frame+1) % 2;
     for (let i = 0; i < aliens.positions.length; i++) {
         let p = aliens.positions[i];
         if (aliens.x+p[0] == 22 || aliens.x+p[0] == -1) {
