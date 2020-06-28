@@ -49,7 +49,7 @@ let levelSprite = makeSprite([
     "### ###  #  ### ###",
 ]);
 
-// font from https://fontstruct#com/fontstructions/show/505936/11x7_smaller_dot_matrix
+// font from https://fontstruct.com/fontstructions/show/505936/11x7_smaller_dot_matrix
 let numSprite = [];
 numSprite[0] = makeSprite([
     "  ###  ",
