@@ -1,0 +1,22 @@
+body {
+  font-family: monospace;
+  line-height: 1.7;
+  max-width: 880px;
+  margin: 50px auto 50px;
+  padding: 0 12px 0;
+  height: 100%;
+}
+
+canvas {
+  display: block;
+  margin: auto;
+}
+
+h1 {
+  text-align: center;
+}
+
+p {
+    font-variant: italic;
+    text-align: center;
+}
