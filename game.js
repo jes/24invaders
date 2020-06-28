@@ -3,58 +3,15 @@ let shieldy = 20;
 let player = {};
 let shields = {};
 let aliens = {};
-
 let bullet = {};
-
-let playerSprite = makeSprite([
-    " . ",
-    "...",
-]);
-
-// TODO: animated aliens (toggle between 2 or 3 sprites per alien)
-let alienSprite = [];
-alienSprite[0] = [
-    makeSprite([
-        ". .",
-        " . ",
-        "...",
-    ]),
-    makeSprite([
-        ". .",
-        "...",
-        " . ",
-    ])
-];
-alienSprite[1] = [
-    makeSprite([
-        " . ",
-        "...",
-        ". .",
-    ]),
-    makeSprite([
-        ". .",
-        "...",
-        " . ",
-    ])
-];
-alienSprite[2] = [
-    makeSprite([
-        "...",
-        "...",
-        ". .",
-    ]),
-    makeSprite([
-        ". .",
-        "...",
-        "...",
-    ])
-];
+let gamestate;
+let leveltransition = {};
 
 function create(game) {
     player = {
         x: 12,
         score: 0,
-        level: 1,
+        level: 0,
         gameover: false,
     };
     bullet = {x: -1, y: -1};
@@ -62,6 +19,8 @@ function create(game) {
     aliens = createAliens();
 
     shields = createShields();
+
+    nextLevel();
 }
 
 function createShields() {
@@ -98,11 +57,10 @@ function createAliens() {
 }
 
 function update(game) {
-    if (player.gameover) {
-        drawGameOver();
-        return;
-    }
+    gamestate(game);
+}
 
+function maingame(game) {
     // draw aliens (XXX: must be drawn before updateBullet for collision detection)
     drawAliens(Color.Red);
     updateBullet();
@@ -110,10 +68,11 @@ function update(game) {
 
     // update aliens at a speed dependent on level
     let slowness = 10 - player.level;
-    if (slowness < 1)
-        slowness = 1;
+    if (slowness < 2)
+        slowness = 2;
     if (game.getFrameCount() % slowness == 0)
         updateAliens();
+
     updateAliensBullets();
 
     // draw player
@@ -148,7 +107,41 @@ function drawAliens(c) {
     }
 }
 
-function drawGameOver() {
+function drawNewLevel(game) {
+    let xoff = Math.floor(leveltransition.frames/4)%2;
+    let yoff = Math.floor(leveltransition.frames/2);
+
+    drawSprite(xoff+3, yoff-5, levelSprite, Color.Red);
+    if (player.level < 10) {
+        drawSprite(xoff+9, yoff+2, numSprite[player.level], Color.Red);
+    } else {
+        drawSprite(xoff+5, yoff+2, numSprite[Math.floor(player.level/10)], Color.Red);
+        drawSprite(xoff+13, yoff+2, numSprite[player.level%10], Color.Red);
+    }
+
+    leveltransition.frames++;
+    if (leveltransition.frames > 60)
+        gamestate = maingame;
+
+    coolColours();
+}
+
+// turn a red-on-grey screen into cool rainbow effects
+function coolColours() {
+    let colourcycle = [Color.Red, Color.Orange, Color.Yellow, Color.Green, Color.Blue, Color. Indigo, Color.Violet, Color.Black, Color.Black, Color.Black, Color.Black];
+    for (let y = 0; y < 24; y++) {
+        for (let x = 0; x < 24; x++) {
+            if (game.getDot(x, y) == Color.Gray) {
+                game.setDot(x, y, Color.Gray);
+            } else if (game.getDot(x, y) == Color.Red) {
+                let n = y  % colourcycle.length;
+                game.setDot(x, y, colourcycle[n]);
+            }
+        }
+    }
+}
+
+function drawGameOver(game) {
     game.setText("Score: " + player.score + " Level: " + player.level + " GAME OVER");
 }
 
@@ -193,7 +186,7 @@ function killAlien(x, y) {
     if (aliens.positions.length == 0) {
         aliens = createAliens();
         shields = createShields();
-        player.level++;
+        nextLevel();
         player.score += 100;
     }
 }
@@ -216,7 +209,7 @@ function updateAliens() {
     }
 
     // shoot!
-    if (Math.random() < 0.3) {
+    if (Math.random() < 0.2) {
         // pick a random alien
         alienShoot(Math.floor(Math.random() * aliens.positions.length));
     }
@@ -247,18 +240,30 @@ function updateAliensBullets() {
 }
 
 function gameOver() {
-    player.gameover = true;
+    gamestate = drawGameOver;
+}
+
+function nextLevel() {
+    player.level++;
+    gamestate = drawNewLevel;
+    leveltransition = {
+        frames: 0,
+    };
 }
 
 function onKeyPress(direction) {
-    if (direction == Direction.Up) {
-        shoot();
-    } else if (direction == Direction.Left) {
-        if (player.x > 1)
-            player.x--;
-    } else if (direction == Direction.Right) {
-        if (player.x < 22)
-            player.x++;
+    if (gamestate == maingame) {
+        if (direction == Direction.Up) {
+            shoot();
+        } else if (direction == Direction.Left) {
+            if (player.x > 1)
+                player.x--;
+        } else if (direction == Direction.Right) {
+            if (player.x < 22)
+                player.x++;
+        }
+    } else if (gamestate == drawNewLevel) {
+        gamestate = maingame;
     }
 }
 
@@ -285,20 +290,3 @@ let config = {
 
 let game = new Game(config);
 game.run();
-
-function drawSprite(x, y, s, col) {
-    for (let sy = 0; sy < s.length; sy++) {
-        for (let sx = 0; sx < s[sy].length; sx++) {
-            let c = s[sy].charAt(sx);
-            if (c == '.' && x+sx >= 0 && x+sx <= 23 && y+sy >= 0 && y+sy <= 23) {
-                game.setDot(x+sx, y+sy, col);
-            }
-        }
-    }
-}
-
-// TODO: this could "compile" the sprite into a function that just does game.setDot()
-// on the dot positions, for efficiency
-function makeSprite(s) {
-    return s;
-}
