@@ -111,12 +111,17 @@ function drawNewLevel(game) {
     let xoff = Math.floor(leveltransition.frames/4)%2;
     let yoff = Math.floor(leveltransition.frames/2);
 
-    drawSprite(xoff+3, yoff-5, levelSprite, Color.Red);
+    drawSprite(xoff+2, yoff-5, levelSprite, Color.Black);
     if (player.level < 10) {
-        drawSprite(xoff+9, yoff+2, numSprite[player.level], Color.Red);
+        drawSprite(xoff+8, yoff+2, numSprite[player.level], Color.Black);
     } else {
-        drawSprite(xoff+5, yoff+2, numSprite[Math.floor(player.level/10)], Color.Red);
-        drawSprite(xoff+13, yoff+2, numSprite[player.level%10], Color.Red);
+        drawSprite(xoff+4, yoff+2, numSprite[Math.floor(player.level/10)], Color.Black);
+        drawSprite(xoff+12, yoff+2, numSprite[player.level%10], Color.Black);
+    }
+
+    for (let y = 0; y < 24; y++) {
+        game.setDot(0, y, Color.Red);
+        game.setDot(23, y, Color.Red);
     }
 
     leveltransition.frames++;
@@ -124,17 +129,18 @@ function drawNewLevel(game) {
         gamestate = maingame;
 
     coolColours();
+
+    game.setText("Score: " + player.score + " Level: " + player.level);
 }
 
-// turn a red-on-grey screen into cool rainbow effects
+// turn a red into cool rainbow effects
 function coolColours() {
-    let colourcycle = [Color.Red, Color.Orange, Color.Yellow, Color.Green, Color.Blue, Color. Indigo, Color.Violet, Color.Black, Color.Black, Color.Black, Color.Black];
+    let colourcycle = [Color.Red, Color.Orange, Color.Yellow, Color.Green, Color.Blue, Color. Indigo, Color.Violet, Color.Gray, Color.Gray, Color.Gray, Color.Gray, Color.Gray, Color.Gray];
     for (let y = 0; y < 24; y++) {
         for (let x = 0; x < 24; x++) {
-            if (game.getDot(x, y) == Color.Gray) {
-                game.setDot(x, y, Color.Gray);
-            } else if (game.getDot(x, y) == Color.Red) {
-                let n = y  % colourcycle.length;
+            if (game.getDot(x, y) == Color.Red) {
+                let n = (x + y - game.getFrameCount()) % colourcycle.length;
+                if (n < 0) n += colourcycle.length;
                 game.setDot(x, y, colourcycle[n]);
             }
         }
@@ -142,6 +148,13 @@ function coolColours() {
 }
 
 function drawGameOver(game) {
+    for (let y = 17; y < 24; y++) {
+        for (let x = 0; x < 24; x++) {
+            game.setDot(x, y, Color.Red);
+        }
+    }
+    drawSprite(1, 1, gameoverSprite, Color.Black);
+    coolColours();
     game.setText("Score: " + player.score + " Level: " + player.level + " GAME OVER");
 }
 
@@ -262,8 +275,6 @@ function onKeyPress(direction) {
             if (player.x < 22)
                 player.x++;
         }
-    } else if (gamestate == drawNewLevel) {
-        gamestate = maingame;
     }
 }
 
