@@ -6,6 +6,7 @@ let aliens = {};
 let bullet = {};
 let gamestate;
 let leveltransition = {};
+let particles = [];
 
 function create(game) {
     player = {
@@ -58,6 +59,7 @@ function createAliens() {
 
 function update(game) {
     gamestate(game);
+    updateParticles(game);
 }
 
 function maingame(game) {
@@ -111,9 +113,9 @@ function drawNewLevel(game) {
     let xoff = Math.floor(leveltransition.frames/4)%2;
     let yoff = Math.floor(leveltransition.frames/2);
 
-    drawSprite(xoff+2, yoff-5, levelSprite, Color.Black);
+    drawSprite(xoff+2, yoff-10, levelSprite, Color.Black);
     if (player.level < 10) {
-        drawSprite(xoff+8, yoff+2, numSprite[player.level], Color.Black);
+        drawSprite(xoff+8, yoff-3, numSprite[player.level], Color.Black);
     } else {
         drawSprite(xoff+4, yoff+2, numSprite[Math.floor(player.level/10)], Color.Black);
         drawSprite(xoff+12, yoff+2, numSprite[player.level%10], Color.Black);
@@ -121,16 +123,48 @@ function drawNewLevel(game) {
 
     for (let y = 0; y < 24; y++) {
         game.setDot(0, y, Color.Red);
+        game.setDot(1, y, Color.Red);
         game.setDot(23, y, Color.Red);
+        game.setDot(22, y, Color.Red);
     }
 
     leveltransition.frames++;
     if (leveltransition.frames > 60)
         gamestate = maingame;
 
+    if (leveltransition.frames < 50 && Math.random() < 0.2) {
+        confetti(Math.floor(Math.random() * 24), Math.floor(Math.random() * 24), [Color.Red, Color.Orange, Color.Yellow, Color.Green, Color.Blue, Color.Indigo, Color.Violet]);
+    }
+
     coolColours();
 
     game.setText("Score: " + player.score + " Level: " + player.level);
+}
+
+function confetti(x, y, colours) {
+    for (let i = 0; i < 3; i++) {
+        particles.push({
+            x: x,
+            y: y,
+            vx: 3*(Math.random()-0.5),
+            vy: 3*(Math.random()-0.5),
+            colour: colours[Math.floor(Math.random() * colours.length)],
+        });
+    }
+}
+
+function updateParticles(game) {
+    for (let i = 0; i < particles.length; i++) {
+        particles[i].x += particles[i].vx;
+        particles[i].y += particles[i].vy;
+        particles[i].vy += 0.1;
+        if (particles[i].x < 0 || particles[i].x > 23 || particles[i].y < 0 || particles[i].y > 23) {
+            particles.splice(i,1);
+            i--;
+            continue;
+        }
+        game.setDot(Math.round(particles[i].x), Math.round(particles[i].y), particles[i].colour);
+    }
 }
 
 // turn a red into cool rainbow effects
@@ -156,6 +190,9 @@ function drawGameOver(game) {
     drawSprite(1, 1, gameoverSprite, Color.Black);
     coolColours();
     game.setText("Score: " + player.score + " Level: " + player.level + " GAME OVER");
+
+    if (Math.random() < 0.2)
+        confetti(Math.floor(Math.random() * 24), Math.floor(Math.random() * 24), [Color.Red, Color.Orange, Color.Yellow, Color.Green, Color.Blue, Color.Indigo, Color.Violet]);
 }
 
 // update the player's bullet
@@ -169,9 +206,9 @@ function updateBullet() {
 
     // collision with player's shields?
     if (bullet.y == shieldy && shields[bullet.x]) {
-        // TODO: add explosion at bullet.x,bullet.y
-        bullet.y = -1;
+        confetti(bullet.x, bullet.y, [Color.Green]);
         delete shields[bullet.x];
+        bullet.y = -1;
         return;
     }
 
@@ -186,6 +223,8 @@ function updateBullet() {
 }
 
 function killAlien(x, y) {
+    confetti(x, y, [Color.Red]);
+
     // find the 3x3 bounding box that (x,y) hits, and remove that alien
     for (let i = 0; i < aliens.positions.length; i++) {
         let p = aliens.positions[i];
@@ -239,6 +278,7 @@ function updateAliensBullets() {
 
         // collision with shields
         if (aliens.bullets[i].y == shieldy && shields[aliens.bullets[i].x]) {
+            confetti(aliens.bullets[i].x, aliens.bullets[i].y, [Color.Green]);
             delete shields[aliens.bullets[i].x];
             aliens.bullets.splice(i, 1);
             i--;
@@ -253,10 +293,15 @@ function updateAliensBullets() {
 }
 
 function gameOver() {
+    for (let i = 0; i < 20; i++)
+        confetti(Math.floor(Math.random() * 24), Math.floor(Math.random() * 24), [Color.Red, Color.Orange, Color.Yellow, Color.Green, Color.Blue, Color.Indigo, Color.Violet]);
     gamestate = drawGameOver;
 }
 
 function nextLevel() {
+    for (let i = 0; i < 20; i++) {
+        confetti(Math.floor(Math.random() * 24), Math.floor(Math.random() * 24), [Color.Red, Color.Orange, Color.Yellow, Color.Green, Color.Blue, Color.Indigo, Color.Violet]);
+    }
     player.level++;
     gamestate = drawNewLevel;
     leveltransition = {
